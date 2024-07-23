@@ -4,36 +4,31 @@ import { authMiddleware } from "@/lib/middleware/authMiddleware";
 async function handler(req, res) {
   if (req.method === "POST") {
     try {
-      const { proCodigo, proDescripcion, proValor, proCantidad } = req.body;
+      const { facNumero, facProductoId, faCantidad } = req.body;
 
       // Validación básica de campos requeridos
-      if (
-        proCodigo === undefined ||
-        proDescripcion === undefined ||
-        proValor === undefined ||
-        proCantidad === undefined
-      ) {
-        return res.status(400).json({
-          message:
-            "proCodigo, proDescripcion, proValor, and proCantidad are required",
-        });
+      if (!facNumero || !facProductoId || faCantidad === undefined) {
+        return res.status(400).json({ message: "All fields are required" });
       }
 
       // Conectar a MongoDB
       const client = await clientPromise;
       const db = client.db("sena");
-      const collection = db.collection("productos");
+      const collection = db.collection("facturaDetalles");
 
-      // Insertar el producto
+      // Insertar el detalle de la factura
       const result = await collection.insertOne({
-        proCodigo,
-        proDescripcion,
-        proValor,
-        proCantidad,
+        facNumero,
+        facProductoId,
+        faCantidad,
       });
 
-      res.status(201).json(result);
+      res.status(201).json({
+        message: "FacturaDetalle created successfully",
+        insertedId: result.insertedId,
+      });
     } catch (error) {
+      console.error("Error connecting to the database:", error);
       res.status(500).json({ error: "Error connecting to the database" });
     }
   } else {
@@ -43,3 +38,5 @@ async function handler(req, res) {
 }
 
 export default authMiddleware(handler);
+
+
