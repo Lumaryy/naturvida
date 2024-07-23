@@ -32,11 +32,23 @@ async function handler(req, res) {
         proCantidad,
       });
 
-      res.status(201).json(result);
+      // Enviar respuesta con el producto creado
+      res.status(201).json({
+        message: "Producto creado con éxito",
+        product: {
+          _id: result.insertedId,
+          proCodigo,
+          proDescripcion,
+          proValor,
+          proCantidad,
+        },
+      });
     } catch (error) {
+      // Manejo de errores en la conexión a la base de datos
       res.status(500).json({ error: "Error connecting to the database" });
     }
   } else {
+    // Manejo de métodos HTTP no permitidos
     res.setHeader("Allow", ["POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }

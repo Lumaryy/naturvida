@@ -9,13 +9,12 @@ async function handler(req, res) {
     return res.status(400).json({ message: "Invalid ID" });
   }
 
-  if (req.method === "GET") {
-    // Lógica para buscar la factura por ID
-    try {
-      const client = await clientPromise;
-      const db = client.db("sena");
-      const collection = db.collection("facturas");
+  const client = await clientPromise;
+  const db = client.db("sena");
 
+  if (req.method === "GET") {
+    try {
+      const collection = db.collection("facturas");
       const factura = await collection.findOne({ _id: new ObjectId(id) });
 
       if (!factura) {
@@ -38,20 +37,25 @@ async function handler(req, res) {
       } = req.body;
 
       // Validación básica de campos requeridos
-      if (
-        !facNumero ||
-        !facFecha ||
-        !facCliente ||
-        !facValorTotal ||
-        !facVendedor
-      ) {
+      if (!facNumero || !facFecha || !facCliente || !facValorTotal || !facVendedor) {
         return res.status(400).json({ message: "All fields are required" });
       }
 
-      const client = await clientPromise;
-      const db = client.db("sena");
-      const collection = db.collection("facturas");
+      // Validar que facCliente existe en la colección clientes
+      const clienteCollection = db.collection("clientes");
+      const clienteExists = await clienteCollection.findOne({ _id: new ObjectId(facCliente) });
+      if (!clienteExists) {
+        return res.status(400).json({ message: "Cliente does not exist" });
+      }
 
+      // Validar que facVendedor existe en la colección vendedores
+      const vendedorCollection = db.collection("vendedores");
+      const vendedorExists = await vendedorCollection.findOne({ _id: new ObjectId(facVendedor) });
+      if (!vendedorExists) {
+        return res.status(400).json({ message: "Vendedor does not exist" });
+      }
+
+      const collection = db.collection("facturas");
       const result = await collection.updateOne(
         { _id: new ObjectId(id) },
         {
@@ -61,6 +65,7 @@ async function handler(req, res) {
             facCliente,
             facValorTotal,
             facVendedor,
+            detalles,
           },
         }
       );
@@ -75,10 +80,7 @@ async function handler(req, res) {
     }
   } else if (req.method === "DELETE") {
     try {
-      const client = await clientPromise;
-      const db = client.db("sena");
       const collection = db.collection("facturas");
-
       const result = await collection.deleteOne({ _id: new ObjectId(id) });
 
       if (result.deletedCount === 0) {
