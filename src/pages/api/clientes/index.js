@@ -8,7 +8,6 @@ const handler = async (req, res) => {
       const db = client.db("sena");
       const collection = db.collection("clientes");
 
-      // Obtener todos los clientes
       const clientes = await collection.find({}).toArray();
 
       res.status(200).json(clientes);
