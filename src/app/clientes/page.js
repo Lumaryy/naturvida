@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const ClientesPage = () => {
-  // Estado para almacenar la lista de clientes
   const [clientes, setClientes] = useState([]);
-  // Estado para manejar los errores
   const [error, setError] = useState(null);
-  // Estado para manejar los datos del formulario
   const [formData, setFormData] = useState({
     dDocumento: '',
     dNombre: '',
@@ -15,25 +13,22 @@ const ClientesPage = () => {
     dTelefono: '',
     dCorreo: ''
   });
-  // Estado para manejar el cliente que se está editando
   const [editingCliente, setEditingCliente] = useState(null);
+  const router = useRouter();
 
-  // Hook useEffect para obtener la lista de clientes al montar el componente
   useEffect(() => {
-    const fetchClientes = async () => {
-      // Obtener el token del almacenamiento local
-      const token = localStorage.getItem('token');
-      if (!token) {
-        window.location.href = '/login'; // Redirige si no hay token
-        return;
-      }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
 
+    const fetchClientes = async () => {
       try {
-        // Realizar la solicitud GET para obtener la lista de clientes
         const response = await fetch('/api/clientes', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`, // Enviar el token en los encabezados
+            'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -41,18 +36,16 @@ const ClientesPage = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        // Convertir la respuesta a JSON y actualizar el estado de clientes
         const data = await response.json();
         setClientes(data);
       } catch (error) {
-        setError(error.message); // Manejar errores
+        setError(error.message);
       }
     };
 
     fetchClientes();
-  }, []);
+  }, [router]);
 
-  // Manejar cambios en los campos del formulario
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -61,33 +54,30 @@ const ClientesPage = () => {
     });
   };
 
-  // Manejar la creación de un nuevo cliente
-  const handleCreateCliente = async () => {
+  const handleCreateCliente = async (e) => {
+    e.preventDefault();
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = '/login'; // Redirige si no hay token
+      router.push('/login');
       return;
     }
 
     try {
-      // Realizar la solicitud POST para crear un nuevo cliente
       const response = await fetch('/api/clientes/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json', // Enviar datos en formato JSON
-          'Authorization': `Bearer ${token}`, // Enviar el token en los encabezados
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData) // Enviar los datos del formulario
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      // Obtener el nuevo cliente creado y actualizar la lista de clientes
       const newCliente = await response.json();
       setClientes([...clientes, newCliente]);
-      // Limpiar el formulario después de la creación
       setFormData({
         dDocumento: '',
         dNombre: '',
@@ -96,39 +86,36 @@ const ClientesPage = () => {
         dCorreo: ''
       });
     } catch (error) {
-      setError(error.message); // Manejar errores
+      setError(error.message);
     }
   };
 
-  // Manejar la actualización de un cliente existente
-  const handleUpdateCliente = async () => {
-    if (!editingCliente) return; // Verificar si hay un cliente siendo editado
+  const handleUpdateCliente = async (e) => {
+    e.preventDefault();
+    if (!editingCliente) return;
 
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = '/login'; // Redirige si no hay token
+      router.push('/login');
       return;
     }
 
     try {
-      // Realizar la solicitud PUT para actualizar el cliente
       const response = await fetch(`/api/clientes/${editingCliente._id}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json', // Enviar datos en formato JSON
-          'Authorization': `Bearer ${token}`, // Enviar el token en los encabezados
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData) // Enviar los datos actualizados del formulario
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      // Obtener el cliente actualizado y actualizar la lista de clientes
       const updatedCliente = await response.json();
       setClientes(clientes.map(cliente => cliente._id === updatedCliente._id ? updatedCliente : cliente));
-      // Limpiar el formulario y el estado de edición después de la actualización
       setEditingCliente(null);
       setFormData({
         dDocumento: '',
@@ -138,24 +125,22 @@ const ClientesPage = () => {
         dCorreo: ''
       });
     } catch (error) {
-      setError(error.message); // Manejar errores
+      setError(error.message);
     }
   };
 
-  // Manejar la eliminación de un cliente
   const handleDeleteCliente = async (id) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = '/login'; // Redirige si no hay token
+      router.push('/login');
       return;
     }
 
     try {
-      // Realizar la solicitud DELETE para eliminar el cliente
       const response = await fetch(`/api/clientes/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`, // Enviar el token en los encabezados
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -163,49 +148,51 @@ const ClientesPage = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      // Actualizar la lista de clientes después de la eliminación
       setClientes(clientes.filter(cliente => cliente._id !== id));
     } catch (error) {
-      setError(error.message); // Manejar errores
+      setError(error.message);
     }
   };
 
-  // Manejar la edición de un cliente
   const handleEditCliente = (cliente) => {
-    setFormData(cliente); // Pre-cargar los datos del cliente en el formulario
-    setEditingCliente(cliente); // Establecer el cliente en el estado de edición
+    setFormData(cliente);
+    setEditingCliente(cliente);
   };
 
   return (
-    <div>
-      <h1>Clientes</h1>
-      {error && <p>Error: {error}</p>}
-      <ul>
+    <div style={styles.container}>
+      <h1 style={styles.title}>Clientes</h1>
+      {error && <p style={styles.error}>Error: {error}</p>}
+      <ul style={styles.list}>
         {clientes.length > 0 ? (
           clientes.map(cliente => (
-            <li key={cliente._id}>
+            <li key={cliente._id} style={styles.card}>
               <p><strong>Nombre:</strong> {cliente.dNombre}</p>
               <p><strong>Documento:</strong> {cliente.dDocumento}</p>
               <p><strong>Dirección:</strong> {cliente.dDireccion}</p>
               <p><strong>Teléfono:</strong> {cliente.dTelefono}</p>
               <p><strong>Correo:</strong> {cliente.dCorreo}</p>
-              <button onClick={() => handleEditCliente(cliente)}>Editar</button>
-              <button onClick={() => handleDeleteCliente(cliente._id)}>Eliminar</button>
+              <button style={styles.button} onClick={() => handleEditCliente(cliente)}>Editar</button>
+              <button style={styles.deleteButton} onClick={() => handleDeleteCliente(cliente._id)}>Eliminar</button>
             </li>
           ))
         ) : (
-          <li>No hay clientes disponibles</li>
+          <li style={styles.emptyMessage}>No hay clientes disponibles</li>
         )}
       </ul>
 
-      <h2>{editingCliente ? 'Actualizar Cliente' : 'Agregar Cliente'}</h2>
-      <form onSubmit={(e) => { e.preventDefault(); editingCliente ? handleUpdateCliente() : handleCreateCliente(); }}>
+      <h2 style={styles.subTitle}>{editingCliente ? 'Actualizar Cliente' : 'Agregar Cliente'}</h2>
+      <form 
+        onSubmit={(e) => { e.preventDefault(); editingCliente ? handleUpdateCliente(e) : handleCreateCliente(e); }} 
+        style={styles.form}
+      >
         <input
           type="text"
           name="dDocumento"
           placeholder="Documento"
           value={formData.dDocumento}
           onChange={handleInputChange}
+          style={styles.input}
         />
         <input
           type="text"
@@ -213,6 +200,7 @@ const ClientesPage = () => {
           placeholder="Nombre"
           value={formData.dNombre}
           onChange={handleInputChange}
+          style={styles.input}
         />
         <input
           type="text"
@@ -220,6 +208,7 @@ const ClientesPage = () => {
           placeholder="Dirección"
           value={formData.dDireccion}
           onChange={handleInputChange}
+          style={styles.input}
         />
         <input
           type="text"
@@ -227,6 +216,7 @@ const ClientesPage = () => {
           placeholder="Teléfono"
           value={formData.dTelefono}
           onChange={handleInputChange}
+          style={styles.input}
         />
         <input
           type="email"
@@ -234,11 +224,96 @@ const ClientesPage = () => {
           placeholder="Correo"
           value={formData.dCorreo}
           onChange={handleInputChange}
+          style={styles.input}
         />
-        <button type="submit">{editingCliente ? 'Actualizar Cliente' : 'Agregar Cliente'}</button>
+        <button type="submit" style={styles.button}>
+          {editingCliente ? 'Actualizar Cliente' : 'Agregar Cliente'}
+        </button>
       </form>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    padding: '20px',
+    maxWidth: '800px',
+    margin: '0 auto',
+    fontFamily: 'Arial, sans-serif',
+  },
+  title: {
+    fontSize: '2em',
+    marginBottom: '20px',
+    color: '#333',
+    textAlign: 'center',
+  },
+  error: {
+    color: 'red',
+    marginBottom: '10px',
+  },
+  list: {
+    listStyleType: 'none',
+    padding: '0',
+  },
+  card: {
+    backgroundColor: '#fff',
+    padding: '15px',
+    marginBottom: '15px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    transition: 'transform 0.3s ease',
+  },
+  cardHover: {
+    transform: 'scale(1.05)',
+  },
+  emptyMessage: {
+    color: '#555',
+    textAlign: 'center',
+  },
+  subTitle: {
+    fontSize: '1.5em',
+    marginBottom: '10px',
+    color: '#333',
+    textAlign: 'center',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  },
+  input: {
+    width: '100%',
+    padding: '10px',
+    marginBottom: '10px',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    fontSize: '1em',
+  },
+  button: {
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '4px',
+    backgroundColor: '#0070f3',
+    color: '#fff',
+    fontSize: '1em',
+    cursor: 'pointer',
+    marginTop: '10px',
+  },
+  deleteButton: {
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '4px',
+    backgroundColor: '#ff4d4f',
+    color: '#fff',
+    fontSize: '1em',
+    cursor: 'pointer',
+    marginTop: '10px',
+    marginLeft: '10px',
+  },
 };
 
 export default ClientesPage;

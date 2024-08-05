@@ -147,19 +147,19 @@ const ProductosPage = () => {
   };
 
   return (
-    <div>
-      <h1>Productos</h1>
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+    <div style={styles.container}>
+      <h1 style={styles.title}>Productos</h1>
+      {error && <p style={styles.error}>Error: {error}</p>}
 
-      <h2>{editingProduct ? 'Editar Producto' : 'Agregar Producto'}</h2>
-      <div style={{ marginBottom: '20px' }}>
+      <h2 style={styles.subTitle}>{editingProduct ? 'Editar Producto' : 'Agregar Producto'}</h2>
+      <div style={styles.form}>
         <input
           type="text"
           name="proCodigo"
           placeholder="Código"
           value={editingProduct ? editingProduct.proCodigo : newProduct.proCodigo}
           onChange={handleChange}
-          style={{ margin: '5px', padding: '5px' }}
+          style={styles.input}
         />
         <input
           type="text"
@@ -167,7 +167,7 @@ const ProductosPage = () => {
           placeholder="Descripción"
           value={editingProduct ? editingProduct.proDescripcion : newProduct.proDescripcion}
           onChange={handleChange}
-          style={{ margin: '5px', padding: '5px' }}
+          style={styles.input}
         />
         <input
           type="number"
@@ -175,7 +175,7 @@ const ProductosPage = () => {
           placeholder="Valor"
           value={editingProduct ? editingProduct.proValor : newProduct.proValor}
           onChange={handleChange}
-          style={{ margin: '5px', padding: '5px' }}
+          style={styles.input}
         />
         <input
           type="number"
@@ -183,63 +183,127 @@ const ProductosPage = () => {
           placeholder="Cantidad"
           value={editingProduct ? editingProduct.proCantidad : newProduct.proCantidad}
           onChange={handleChange}
-          style={{ margin: '5px', padding: '5px' }}
+          style={styles.input}
         />
         {editingProduct ? (
           <button
             onClick={handleEditProduct}
-            style={{ margin: '5px', padding: '10px', backgroundColor: 'blue', color: 'white' }}
+            style={{ ...styles.button, backgroundColor: 'blue' }}
           >
             Actualizar Producto
           </button>
         ) : (
           <button
             onClick={handleAddProduct}
-            style={{ margin: '5px', padding: '10px', backgroundColor: 'green', color: 'white' }}
+            style={{ ...styles.button, backgroundColor: 'green' }}
           >
             Agregar Producto
           </button>
         )}
       </div>
 
-      <h2>Lista de Productos</h2>
-      <ul style={{ listStyleType: 'none', padding: '0' }}>
+      <h2 style={styles.subTitle}>Lista de Productos</h2>
+      <ul style={styles.list}>
         {productos.length > 0 ? (
           productos.map(producto => (
             producto && producto._id ? (
-              <li key={producto._id} style={{ border: '1px solid #ddd', padding: '10px', marginBottom: '10px' }}>
+              <li key={producto._id} style={styles.card}>
                 <strong>Código:</strong> {producto.proCodigo || 'N/A'}<br />
                 <strong>Descripción:</strong> {producto.proDescripcion || 'N/A'}<br />
                 <strong>Valor:</strong> {producto.proValor || 'N/A'}<br />
                 <strong>Cantidad:</strong> {producto.proCantidad || 'N/A'}<br />
                 <button
                   onClick={() => setEditingProduct(producto)}
-                  style={{ margin: '5px', padding: '5px', backgroundColor: 'blue', color: 'white' }}
+                  style={{ ...styles.button, backgroundColor: 'blue' }}
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => handleDeleteProduct(producto._id)}
-                  style={{ margin: '5px', padding: '5px', backgroundColor: 'red', color: 'white' }}
+                  style={{ ...styles.button, backgroundColor: 'red' }}
                 >
                   Eliminar
                 </button>
               </li>
             ) : (
-              <li key="no-product" style={{ border: '1px solid #ddd', padding: '10px', marginBottom: '10px' }}>
+              <li key="no-product" style={styles.card}>
                 Producto inválido
               </li>
             )
           ))
         ) : (
-          <li>No hay productos disponibles</li>
+          <li style={styles.card}>No hay productos disponibles</li>
         )}
       </ul>
     </div>
   );
 };
 
+const styles = {
+  container: {
+    padding: '20px',
+    maxWidth: '800px',
+    margin: '0 auto',
+    fontFamily: 'Arial, sans-serif',
+  },
+  title: {
+    fontSize: '2em',
+    marginBottom: '20px',
+    color: '#333',
+    textAlign: 'center',
+  },
+  error: {
+    color: 'red',
+    marginBottom: '10px',
+  },
+  subTitle: {
+    fontSize: '1.5em',
+    marginBottom: '10px',
+    color: '#333',
+    textAlign: 'center',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    marginBottom: '20px',
+  },
+  input: {
+    width: '100%',
+    padding: '10px',
+    marginBottom: '10px',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    fontSize: '1em',
+  },
+  button: {
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '4px',
+    color: '#fff',
+    fontSize: '1em',
+    cursor: 'pointer',
+    marginTop: '10px',
+  },
+  list: {
+    listStyleType: 'none',
+    padding: '0',
+  },
+  card: {
+    backgroundColor: '#fff',
+    padding: '15px',
+    marginBottom: '15px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    transition: 'transform 0.3s ease',
+  },
+  cardHover: {
+    transform: 'scale(1.05)',
+  },
+};
+
 export default ProductosPage;
-
-
-
