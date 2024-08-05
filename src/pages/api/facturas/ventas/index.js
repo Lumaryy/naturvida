@@ -1,45 +1,56 @@
 import clientPromise from "@/lib/mongodb";
 import { authMiddleware } from "@/lib/middleware/authMiddleware";
 
-const handler = async (req, res) => {
+async function handler(req, res) {
   if (req.method === "GET") {
     try {
-      const { fechaInicio, fechaFin } = req.query;
-
-      // Validar las fechas
-      if (!fechaInicio || !fechaFin) {
-        return res.status(400).json({ message: "Fecha de inicio y fecha de fin son requeridas" });
-      }
-
-      // Convertir las fechas a objetos Date
-      const startDate = new Date(fechaInicio);
-      const endDate = new Date(fechaFin);
-      
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return res.status(400).json({ message: "Fechas inválidas" });
-      }
-
-      // Conectar a MongoDB
       const client = await clientPromise;
       const db = client.db("sena");
-      const collection = db.collection("ventas");
+      
+      const facturas = await db.collection('facturas').aggregate([
+        {
+          $lookup: {
+            from: 'clientes',
+            localField: 'facCliente',
+            foreignField: '_id',
+            as: 'cliente'
+          }
+        },
+        {
+          $unwind: '$cliente'
+        },
+        {
+          $lookup: {
+            from: 'vendedores',
+            localField: 'facVendedor',
+            foreignField: '_id',
+            as: 'vendedor'
+          }
+        },
+        {
+          $unwind: '$vendedor'
+        },
+        {
+          $project: {
+            _id: 0,
+            facCodigo: 1,
+            facValor: 1,
+            'cliente.cliCedula': 1,
+            'cliente.cliNombre': 1,
+            'vendedor.venNombre': 1
+          }
+        }
+      ]).toArray();
 
-      // Obtener las ventas en el rango de fechas
-      const ventas = await collection.find({
-        fechaVenta: { $gte: startDate, $lte: endDate }
-      }).toArray();
-
-      // Responder con la lista de ventas
-      res.status(200).json(ventas);
+      res.status(200).json(facturas);
     } catch (error) {
-      console.error("Error connecting to the database:", error); // Registrar el error
+      console.error(error);
       res.status(500).json({ error: "Error connecting to the database" });
     }
   } else {
-    // Manejo de métodos no permitidos
     res.setHeader("Allow", ["GET"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-};
+}
 
 export default authMiddleware(handler);
